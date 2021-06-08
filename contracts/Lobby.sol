@@ -30,36 +30,32 @@ contract Lobby is Ownable{
         require(msg.sender == _game.player1, "usted no es el anfitrion del juego");
         _;
     }
-
+    
     function createGame(uint bet) public payable {
         Game memory game = Game(msg.sender, address(0x0), bet, false);
         games.push(game);
     }
-
-    function joinGame(uint maxBet) public payable {
+    
+    function findGame(uint minBet, uint maxBet) external payable {
         for(uint i = 0; i < games.length; i++){
-            if (games[i].isFull == false && games[i].bet < maxBet) {
-                games[i].isFull = true;
-                games[i].player2 = msg.sender;
-                return;
+                if (games[i].isFull == false && games[i].bet < maxBet && games[i].bet > minBet) {
+                joinGame(games[i]);
             }
         }
     }
 
+    function joinGame(Game memory _game) internal view {
+        _game.isFull = true;
+        _game.player2 = msg.sender;
+    }
+
     function closeGame(Game memory _game) public isHost(_game) {
         Game storage game = playerToGame[msg.sender];
-        uint pos = findGame(game);
+        uint pos = 0; //por ahora
         delete games[pos];
     }
 
-    function findGame(Game storage _game) internal returns (uint) {
-        return 0; //hasta que vea como usar un equals
-        /*for (uint i = 0; i < games.length; i++) {
-            if (games[i].equals(_game)) {
-                return i;
-            }
-        }*/
-    }
+
 
     function play(string memory _move, Game memory _game) external isPlaying(_game){
         
