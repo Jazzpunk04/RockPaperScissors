@@ -6,7 +6,7 @@ import "../node_modules/@openzeppelin/contracts/access/Ownable.sol";
 
 contract Lobby is Ownable{
 
-    struct user{
+    struct Player{
         uint id;
         uint balance;
     }
@@ -15,30 +15,39 @@ contract Lobby is Ownable{
     mapping (address => Game) playerToGame;
 
     struct Game {
-        address phost;
-        address pjoined;
+        address player1;
+        address player2;
         uint bet;
         bool isFull;
     }
 
-    function createGame(uint bet) public {
+    modifier isPlaying(Game memory _game) {
+        require(msg.sender == _game.player1 || msg.sender == _game.player2, "usted no es un participante del jeugo");
+        _;
+    }
+
+    modifier isHost(Game memory _game) {
+        require(msg.sender == _game.player1, "usted no es el anfitrion del juego");
+        _;
+    }
+
+    function createGame(uint bet) public payable {
         Game memory game = Game(msg.sender, address(0x0), bet, false);
         games.push(game);
     }
 
-    function joinGame(uint maxBet) public {
+    function joinGame(uint maxBet) public payable {
         for(uint i = 0; i < games.length; i++){
             if (games[i].isFull == false && games[i].bet < maxBet) {
                 games[i].isFull = true;
-                games[i].pjoined = msg.sender;
+                games[i].player2 = msg.sender;
                 return;
             }
         }
     }
 
-    function closeGame() public {
+    function closeGame(Game memory _game) public isHost(_game) {
         Game storage game = playerToGame[msg.sender];
-        require(game.phost == msg.sender);
         uint pos = findGame(game);
         delete games[pos];
     }
@@ -50,5 +59,9 @@ contract Lobby is Ownable{
                 return i;
             }
         }*/
+    }
+
+    function play(string memory _move, Game memory _game) external isPlaying(_game){
+        
     }
 }
