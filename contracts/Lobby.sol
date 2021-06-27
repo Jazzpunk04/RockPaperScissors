@@ -118,7 +118,9 @@ contract RockPaperScissors is Ownable{
      function getGames() public view returns (Game[] memory){
         return games;
     }
-}   
+}  
+
+// no se bien como implementar esto tengo que chequear con tomas
 
 //    function playMove(Game _game, string memory _move, string memory _keyword) public isPlayable(_move) {
 //         string memory moveKeyword = _move + " " + _keyword;
