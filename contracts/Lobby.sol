@@ -120,7 +120,7 @@ contract RockPaperScissors is Ownable{
     }
 }  
 
-// no se bien como implementar esto tengo que chequear con tomas
+// no se bien como implementar esto 
 
 //    function playMove(Game _game, string memory _move, string memory _keyword) public isPlayable(_move) {
 //         string memory moveKeyword = _move + " " + _keyword;
