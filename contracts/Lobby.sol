@@ -16,6 +16,8 @@ contract RockPaperScissors is Ownable{
         address payable player2;
         uint bet;
         bool isFull;
+        uint p1move;
+        uint p2move;
     }
     constructor()  payable {
         
@@ -25,10 +27,11 @@ contract RockPaperScissors is Ownable{
         require (_game.player1 == msg.sender && _game.player2 == msg.sender);
         _;
     }
+    
     Game[] games;
     
     function createGame(address payable _host,uint _bet) public{
-        games.push(Game(_host,payable(address(0x0)),_bet,false));
+        games.push(Game(_host,payable(address(0x0)),_bet,false, 0, 0));
     }
     
     function findGame(uint _minBet, uint _maxBet, address payable _searchingPlayer) public {
@@ -62,8 +65,24 @@ contract RockPaperScissors is Ownable{
          "The play must be 'rock', 'paper' or 'scissors' ");
          
          payWiner(p1HashedMove,p2HashedMove,_game);
-        
-       
+    }
+
+//MATI: se tienen que crear de forma individual las movidas
+    function declareMove(string memory _move, string memory _keyword, Game memory _game) public isPlayer(_game){
+        uint separate = uint(keccak256(abi.encodePacked(",")));
+        uint keywordHash = uint(keccak256(abi.encodePacked(_keyword)));
+        uint HashMove = hashMove(_move);
+        uint codedMove = HashMove + separate + keywordHash;
+        if (isHost(msg.sender, _game)){
+            _game.p1move = codedMove;
+        } else {
+            _game.p2move = codedMove;
+        }
+
+    }
+
+    function isHost(address _player, Game memory _game) pure internal returns(bool) {
+        return _player == _game.player1;
     }
     
      function hashMove(string memory _move) internal pure returns (uint hashedMove){
@@ -97,6 +116,17 @@ contract RockPaperScissors is Ownable{
          }else return(2);//  player 2 Wins
          
      }
+
+//MATI: falto el caso en el que uno de los dos participantes no logro responder su jugada
+    function checkWinerGame(Game memory _game) public returns (uint) {
+        uint p1move = _game.p1move;
+        uint p2move = _game.p2move;
+
+        if (p1move == 0) {return (2);}
+        if (p2move == 0) {return (1);}
+
+        checkWiner(p1move, p2move);
+    }
      
     
     function payWiner(uint  _movePlayer1, uint  _movePlayer2, Game memory _game) internal  {
