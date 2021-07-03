@@ -44,4 +44,8 @@ contract Game is Lobby {
         _;
     }
 
+    function getPlayer() internal view returns(bool) {
+        return msg.sender == player1.name;
+    }
+
 }

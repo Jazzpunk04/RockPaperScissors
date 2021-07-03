@@ -45,7 +45,7 @@ contract Lobby is Ownable{
         for(uint i = 0; i < games.length; i++){
             if(games[i].isFull == false && games[i].bet > _minBet && games[i].bet < _maxBet){
                 joinGame(games[i], _searchingPlayer);
-                Game memory joinedGame = games[i];
+                //Game memory joinedGame = games[i];
                 games[i] = games[games.length-1];
                 delete games[games.length-1];
                 //returns (address payable player1, address payable player2, uint bet, bool isFull) 
@@ -76,7 +76,7 @@ contract Lobby is Ownable{
     }
 
 //MATI: se tienen que crear de forma individual las movidas
-    function declareMove(string memory _move, string memory _keyword, Game memory _game) public isPlayer(_game){
+    function declareMove(string memory _move, string memory _keyword, Game memory _game) public view isPlayer(_game){
         uint keywordHash = uint(keccak256(abi.encodePacked(_keyword)));
         uint HashMove = hashMove(_move);
         uint codedMove = SafeMath.add(HashMove, keywordHash);
@@ -125,7 +125,7 @@ contract Lobby is Ownable{
      }
 
 //MATI: falto el caso en el que uno de los dos participantes no logro responder su jugada
-    function checkWinerGame(Game memory _game) public returns (uint) {
+    function checkWinerGame(Game memory _game) public pure returns(uint) {
         uint p1move = _game.p1move;
         uint p2move = _game.p2move;
 
