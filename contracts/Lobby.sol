@@ -3,6 +3,7 @@ pragma solidity >=0.5.0 <0.9.0;
 
 import "../node_modules/@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "../node_modules/@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 // imports en remix
 // import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/access/Ownable.sol";
@@ -35,7 +36,7 @@ contract Lobby is Ownable{
     Game[] games;
     
     function createGame(address payable _host,uint _bet) public{
-        Game game = Game(_host,payable(address(0x0)),_bet,false, 0, 0);
+        Game memory game = Game(_host,payable(address(0x0)),_bet,false, 0, 0);
         games.push(game);
         emit gameCreated(game);
     }
@@ -54,7 +55,7 @@ contract Lobby is Ownable{
     }
     
     
-   function joinGame(Game memory _game , address payable joinedPlayer) internal pure {
+   function joinGame(Game memory _game , address payable joinedPlayer) internal {
         _game.isFull = true;
         _game.player2 = joinedPlayer;
         emit gameJoined(_game);
@@ -78,7 +79,7 @@ contract Lobby is Ownable{
     function declareMove(string memory _move, string memory _keyword, Game memory _game) public isPlayer(_game){
         uint keywordHash = uint(keccak256(abi.encodePacked(_keyword)));
         uint HashMove = hashMove(_move);
-        uint codedMove = sum(HashMove, keywordHash);
+        uint codedMove = SafeMath.add(HashMove, keywordHash);
         if (isHost(msg.sender, _game)){
             _game.p1move = codedMove;
         } else {
