@@ -1,0 +1,5 @@
+manejar los eventos
+agrupar todo en dos contratos
+majerar el tiempo con now
+hacer la encriptacion de la jugada con la palabra clave
+ver como transferir la plata ya que el contrato no puede hacerlo

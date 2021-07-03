@@ -8,8 +8,9 @@ import "../node_modules/@openzeppelin/contracts/access/Ownable.sol";
 // import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/access/Ownable.sol";
 // import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC721/ERC721.sol";
 
-contract RockPaperScissors is Ownable{
-    
+contract Lobby is Ownable{
+
+    using SafeMath for uint256;
  
     struct Game{
         address payable player1;
@@ -22,6 +23,9 @@ contract RockPaperScissors is Ownable{
     constructor()  payable {
         
     }
+
+    event gameCreated(Game _game);
+    event gameJoined(Game _game);
     
     modifier isPlayer(Game memory _game){
         require (_game.player1 == msg.sender && _game.player2 == msg.sender);
@@ -31,7 +35,9 @@ contract RockPaperScissors is Ownable{
     Game[] games;
     
     function createGame(address payable _host,uint _bet) public{
-        games.push(Game(_host,payable(address(0x0)),_bet,false, 0, 0));
+        Game game = Game(_host,payable(address(0x0)),_bet,false, 0, 0);
+        games.push(game);
+        emit gameCreated(game);
     }
     
     function findGame(uint _minBet, uint _maxBet, address payable _searchingPlayer) public {
@@ -51,6 +57,7 @@ contract RockPaperScissors is Ownable{
    function joinGame(Game memory _game , address payable joinedPlayer) internal pure {
         _game.isFull = true;
         _game.player2 = joinedPlayer;
+        emit gameJoined(_game);
     }
     
     function play(string memory _P1Move, string memory _P2Move, Game memory _game) public isPlayer(_game){
@@ -69,10 +76,9 @@ contract RockPaperScissors is Ownable{
 
 //MATI: se tienen que crear de forma individual las movidas
     function declareMove(string memory _move, string memory _keyword, Game memory _game) public isPlayer(_game){
-        uint separate = uint(keccak256(abi.encodePacked(",")));
         uint keywordHash = uint(keccak256(abi.encodePacked(_keyword)));
         uint HashMove = hashMove(_move);
-        uint codedMove = HashMove + separate + keywordHash;
+        uint codedMove = sum(HashMove, keywordHash);
         if (isHost(msg.sender, _game)){
             _game.p1move = codedMove;
         } else {
