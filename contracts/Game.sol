@@ -15,33 +15,32 @@ contract Game is Lobby {
         address name;
         uint encryptedMove;
         uint cd;
-        bool host;
     }
 
-    constructor (address _player1, address _player2, uint bet) {
+    constructor (address _player1, address _player2, uint _bet) {
         player1.name = _player1;
-        player1.host = true;
-
         player2.name = _player2;
-        player2.host = false;
+        bet = _bet;
 
     }
     
     uint timeBetweenPlays = 5 minutes;    //si el otro jugador no hizo la jugada => iniciar el cooldown
     Player player1;
     Player player2;
-
+    uint bet;
 
     event playerMove(Player _payer, uint time);
     event moveReveal(Player _player1, Player _player2);
+    event declareWinner(Player _winner);
 
-    modifier isPlayer(address _address){
+
+    modifier isPlaying(address _address){
         require(_address == player1.name || _address == player2.name);
         _;
     }
 
-    modifier isHost(address _address){
-        require(condition);
+    modifier isTheHost(address _address){
+        require(_address == player1.name);
         _;
     }
 
