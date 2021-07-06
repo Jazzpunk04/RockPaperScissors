@@ -11,7 +11,7 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 contract Lobby is Ownable{
 
-    using SafeMath for uint256;
+    using SafeMath for uint;
  
     struct Game{
         address payable player1;
