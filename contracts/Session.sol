@@ -83,4 +83,8 @@ contract Session is Lobby {
 
     }
 
+    function payWiner(uint _winner) public {
+
+    }
+
 }
