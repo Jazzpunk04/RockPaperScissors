@@ -13,7 +13,7 @@ contract Lobby is Ownable{
 
     using SafeMath for uint;
  
-    struct Game{
+    struct Session{
         address payable player1;
         address payable player2;
         uint bet;
@@ -25,29 +25,29 @@ contract Lobby is Ownable{
         
     }
 
-    event gameCreated(Game _game);
-    event gameJoined(Game _game);
+    event gameCreated(Session _session);
+    event gameJoined(Session _session);
     
-    modifier isPlayer(Game memory _game){
-        require (_game.player1 == msg.sender && _game.player2 == msg.sender);
+    modifier isPlayer(Session memory _session){
+        require (_session.player1 == msg.sender && _session.player2 == msg.sender);
         _;
     }
     
-    Game[] games;
+    Session[] sessions;
     
     function createGame(address payable _host,uint _bet) public{
-        Game memory game = Game(_host,payable(address(0x0)),_bet,false, 0, 0);
-        games.push(game);
-        emit gameCreated(game);
+        Session memory session = Session(_host,payable(address(0x0)),_bet,false, 0, 0);
+        sessions.push(session);
+        emit gameCreated(session);
     }
     
     function findGame(uint _minBet, uint _maxBet, address payable _searchingPlayer) public {
-        for(uint i = 0; i < games.length; i++){
-            if(games[i].isFull == false && games[i].bet > _minBet && games[i].bet < _maxBet){
-                joinGame(games[i], _searchingPlayer);
+        for(uint i = 0; i < sessions.length; i++){
+            if(sessions[i].isFull == false && sessions[i].bet > _minBet && sessions[i].bet < _maxBet){
+                joinGame(sessions[i], _searchingPlayer);
                 //Game memory joinedGame = games[i];
-                games[i] = games[games.length-1];
-                delete games[games.length-1];
+                sessions[i] = sessions[sessions.length-1];
+                delete sessions[sessions.length-1];
                 //returns (address payable player1, address payable player2, uint bet, bool isFull) 
                 // return (joinedGame.player1,joinedGame.player2,joinedGame.bet,joinedGame.isFull);
             }
@@ -55,13 +55,13 @@ contract Lobby is Ownable{
     }
     
     
-   function joinGame(Game memory _game , address payable joinedPlayer) internal {
-        _game.isFull = true;
-        _game.player2 = joinedPlayer;
-        emit gameJoined(_game);
+   function joinGame(Session memory _session , address payable joinedPlayer) internal {
+        _session.isFull = true;
+        _session.player2 = joinedPlayer;
+        emit gameJoined(_session);
     }
     
-    function play(string memory _P1Move, string memory _P2Move, Game memory _game) public isPlayer(_game){
+    function play(string memory _P1Move, string memory _P2Move, Session memory _session) public isPlayer(_session){
         
          uint p1HashedMove = hashMove(_P1Move);
          uint p2HashedMove = hashMove(_P2Move);
@@ -72,24 +72,24 @@ contract Lobby is Ownable{
          require(p2HashedMove == uint(keccak256(abi.encodePacked(("rock")))) || p2HashedMove == uint(keccak256(abi.encodePacked(("paper")))) || p2HashedMove == uint(keccak256(abi.encodePacked(("scissors")))), 
          "The play must be 'rock', 'paper' or 'scissors' ");
          
-         payWiner(p1HashedMove,p2HashedMove,_game);
+         payWiner(p1HashedMove,p2HashedMove,_session);
     }
 
 //MATI: se tienen que crear de forma individual las movidas
-    function declareMove(string memory _move, string memory _keyword, Game memory _game) public view isPlayer(_game){
+    function declareMove(string memory _move, string memory _keyword, Session memory _session) public view isPlayer(_session){
         uint keywordHash = uint(keccak256(abi.encodePacked(_keyword)));
         uint HashMove = hashMove(_move);
         uint codedMove = SafeMath.add(HashMove, keywordHash);
-        if (isHost(msg.sender, _game)){
-            _game.p1move = codedMove;
+        if (isHost(msg.sender, _session)){
+            _session.p1move = codedMove;
         } else {
-            _game.p2move = codedMove;
+            _session.p2move = codedMove;
         }
 
     }
 
-    function isHost(address _player, Game memory _game) pure internal returns(bool) {
-        return _player == _game.player1;
+    function isHost(address _player, Session memory _session) pure internal returns(bool) {
+        return _player == _session.player1;
     }
     
      function hashMove(string memory _move) internal pure returns (uint hashedMove){
@@ -125,9 +125,9 @@ contract Lobby is Ownable{
      }
 
 //MATI: falto el caso en el que uno de los dos participantes no logro responder su jugada
-    function checkWinerGame(Game memory _game) public pure returns(uint) {
-        uint p1move = _game.p1move;
-        uint p2move = _game.p2move;
+    function checkWinerGame(Session memory _session) public pure returns(uint) {
+        uint p1move = _session.p1move;
+        uint p2move = _session.p2move;
 
         if (p1move == 0) {return (2);}
         if (p2move == 0) {return (1);}
@@ -136,32 +136,32 @@ contract Lobby is Ownable{
     }
      
     
-    function payWiner(uint  _movePlayer1, uint  _movePlayer2, Game memory _game) internal  {
+    function payWiner(uint  _movePlayer1, uint  _movePlayer2, Session memory _session) internal  {
 
          uint playerWiner = checkWiner(_movePlayer1,_movePlayer2);
          
          if(playerWiner == 0){
-             _game.player1.transfer(_game.bet);
-             _game.player2.transfer(_game.bet);
+             _session.player1.transfer(_session.bet);
+             _session.player2.transfer(_session.bet);
          }else if (playerWiner == 1){
-             _game.player1.transfer(2*_game.bet);
+             _session.player1.transfer(2*_session.bet);
          }else{ 
-             _game.player2.transfer(2*_game.bet);
+             _session.player2.transfer(2*_session.bet);
          }
          
      }
      
      
-     function getGames() public view returns (Game[] memory){
-        return games;
+     function getSessions() public view returns (Session[] memory){
+        return sessions;
     }
 }  
 
 // no se bien como implementar esto 
 
-//    function playMove(Game _game, string memory _move, string memory _keyword) public isPlayable(_move) {
+//    function playMove(Game _session, string memory _move, string memory _keyword) public isPlayable(_move) {
 //         string memory moveKeyword = _move + " " + _keyword;
 //         bytes32 moveEncrypted =  keccak256(abi.encodePacked((moveKeyword)));
-//         _game.playerMove[msg.sender] = moveEncrypted;
+//         _session.playerMove[msg.sender] = moveEncrypted;
 //         // hay que setear el timer
 //     }
