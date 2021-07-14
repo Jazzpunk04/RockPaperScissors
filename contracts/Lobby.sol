@@ -25,6 +25,7 @@ contract Lobby is Ownable{
     
     
     function createGame(address payable _host,uint _bet) public{
+        require(_host.balance > _bet, "you don't have the required balance to create the game");
         GameRoom game = new GameRoom(_host,_bet);
         gameRooms[address(game)] = game;
         emit gameCreated(game);

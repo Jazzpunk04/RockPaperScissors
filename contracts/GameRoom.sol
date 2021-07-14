@@ -18,14 +18,25 @@ contract GameRoom {
     address payable player2;
     uint bet;
     bool isFull;
-    uint player1Move = 0;
-    uint player2Move = 0;
+    mapping (address => bytes32) moves;
+    mapping (address => uint) cooldowns;
+    uint timeBetweenPlays = 5 minutes;
     
     //Tiene sentido hacer esto??
     modifier isPlayer(){
         require(player1 == msg.sender || player2 == msg.sender);
         _;
     }
+
+    modifier isTheHost(address _address){
+        require(_address == player1);
+        _;
+    }
+
+    event playerMove(address _player, uint time);
+    event moveReveal(address _player1, address _player2);
+    event declareWinner(address _winner);
+    event playerTimeOut(address _player);
     
     constructor  (address payable _player1, uint _bet) payable { 
         /** Habria que ver que el player1 tenga el balance que quiere apostar
@@ -36,7 +47,7 @@ contract GameRoom {
     }
     
     function setPlayer2(address payable _player2) external payable{
-        require(_player2.balance >= bet); /** si podemos solucionar lo del constructor podemos hacer un modifier que chequee esto y listo*/
+        require(_player2.balance >= bet); 
         player2 = _player2;
         isFull = true;
     }
@@ -57,25 +68,41 @@ contract GameRoom {
          
          payWiner(p1HashedMove,p2HashedMove);
     }
-    
-    //MATI: se tienen que crear de forma individual las movidas
-    function declareMove(string memory _move, string memory _keyword) public  isPlayer(){
-        if (msg.sender == player1){
-            require(player1Move == 0);
-            player1Move = setCodedMove(_move,_keyword);
-        } else {
-            require(player2Move == 0);
-            player2Move = setCodedMove(_move,_keyword);
-        }
 
+    function getPlayer() internal view returns(uint) {
+        if (msg.sender == player1){
+            return 1;
+        }else{
+        return 2;
+        }
+    }
+
+    function declareMove(bytes32 _move) public isPlayer() {
+        if (getPlayer() == 1) {
+            changeMove(_move, player1, player2);
+        } else {
+            changeMove(_move, player2, player1);
+        }
+    }
+
+
+    function changeMove(bytes32 _move, address _player, address _rival) internal {
+        uint cooldown = block.timestamp;
+        cooldown = cooldowns[_player];
+        require(moves[_player] == "", "you already made a move"); //VER COMO ARREGLARLO
+        if (cooldowns[_rival] != 0){
+            if (cooldowns[_player] - cooldowns[_rival] > timeBetweenPlays) {
+                emit playerTimeOut(_player);
+                //payWinner(_rival.number); FALTA HACER
+                return;
+            }
+        }
+        bytes32 move = _move;
+        move = moves[_player];
+        emit playerMove(_player, cooldown);
     }
     
-    function setCodedMove(string memory _move, string memory _keyword)internal view returns (uint _codedMove){
-        uint keywordHash = uint(keccak256(abi.encodePacked(_keyword)));
-        uint HashMove = hashMove(_move);
-        uint codedMove = SafeMath.add(HashMove, keywordHash);
-        return codedMove;
-    }
+
 
      function hashMove(string memory _move) internal pure returns (uint hashedMove){
          uint  _hashedMove = uint(keccak256(abi.encodePacked(_move)));
@@ -108,19 +135,7 @@ contract GameRoom {
          }else return(2);//  player 2 Wins
          
      }
-
-//MATI: falto el caso en el que uno de los dos participantes no logro responder su jugada
-    function checkWinerGame() public  returns(uint) {
-        uint p1move = player1Move;
-        uint p2move = player2Move;
-
-        if (p1move == 0) {return (2);}
-        if (p2move == 0) {return (1);}
-
-        checkWiner(p1move, p2move);
-    }
-     
-    
+         
     function payWiner(uint  _movePlayer1, uint  _movePlayer2) internal  {
 
          uint playerWiner = checkWiner(_movePlayer1,_movePlayer2);
@@ -138,7 +153,24 @@ contract GameRoom {
     
 
 }
+    //MATI: se tienen que crear de forma individual las movidas
+    // function declareMove(string memory _move, string memory _keyword) public  isPlayer(){
+    //     if (msg.sender == player1){
+    //         require(player1Move == 0, "you already made a move");
+    //         player1Move = setCodedMove(_move,_keyword);
+    //     } else {
+    //         require(player2Move == 0);
+    //         player2Move = setCodedMove(_move,_keyword);
+    //     }
 
+    // }
+    
+    // function setCodedMove(string memory _move, string memory _keyword)internal view returns (uint _codedMove){
+    //     uint keywordHash = uint(keccak256(abi.encodePacked(_keyword)));
+    //     uint HashMove = hashMove(_move);
+    //     uint codedMove = SafeMath.add(HashMove, keywordHash);
+    //     return codedMove;
+    // }
 // struct Player {
     //     uint number;
     //     address name;
@@ -165,10 +197,7 @@ contract GameRoom {
     // uint bet;
     // bool isFull;
 
-    // event playerMove(Player _payer, uint time);
-    // event moveReveal(Player _player1, Player _player2);
-    // event declareWinner(Player _winner);
-    // event playerTimeOut(Player _player);
+
 
 
     // modifier isPlaying(address _address){
@@ -181,30 +210,10 @@ contract GameRoom {
     //     _;
     // }
 
-    // function getPlayer() internal view returns(bool) {
-    //     return msg.sender == player1.name;
-    // }
+ 
 
-    // function declareMove(bytes32 _move) public isPlaying(msg.sender) {
-    //     if (getPlayer()) {
-    //         changeMove(_move, player1, player2);
-    //     } else {
-    //         changeMove(_move, player2, player1);
-    //     }
-    // }
+    
 
-    // function changeMove(bytes32 _move, Player _player, Player _rival) internal {
-    //     _player.cd = now;
-    //     require(_player.move == "", "you already made a move");
-    //     if (_rival.cd != 0){
-    //         if (_player.cd - _rival.cd > timeBetweenPlays) {
-    //             emit playerTimeOut(_player);
-    //             payWinner(_rival.number);
-    //             return;
-    //         }
-    //     }
-    //     _player.move = _move;
-    // }
 
     // //ver el ganador y realizar el pago
     // function revealMoves() public {
