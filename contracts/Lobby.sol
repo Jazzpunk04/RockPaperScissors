@@ -22,6 +22,7 @@ contract Lobby is Ownable{
 
     event gameCreated(GameRoom _game);                          /** o es asi event gameCreated(address _game);  ??*/
     event gameJoined(GameRoom _game, address _joinedPlayer);    /** o es asi event event gameJoined(address _game, address _joinedPlayer);  ??*/
+    event gameDeleted(GameRoom _game);
     
     
     function createGame(address payable _host,uint _bet) public{
@@ -38,12 +39,3 @@ contract Lobby is Ownable{
         emit gameJoined(game, _joinedPlayer);
     }
 }  
-
-// no se bien como implementar esto 
-
-//    function playMove(Game _game, string memory _move, string memory _keyword) public isPlayable(_move) {
-//         string memory moveKeyword = _move + " " + _keyword;
-//         bytes32 moveEncrypted =  keccak256(abi.encodePacked((moveKeyword)));
-//         _game.playerMove[msg.sender] = moveEncrypted;
-//         // hay que setear el timer
-//     }
