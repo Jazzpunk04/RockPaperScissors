@@ -20,7 +20,9 @@ contract GameRoom {
     bool isFull;
     mapping (address => bytes32) moves;
     mapping (address => uint) cooldowns;
+    mapping (address => uint) selection; //tijeras => 0; papel => 1; piedra => 2
     uint timeBetweenPlays = 5 minutes;
+    bool isOpen;
     
     //Tiene sentido hacer esto??
     modifier isPlayer(){
@@ -35,15 +37,17 @@ contract GameRoom {
 
     event playerMove(address _player, uint time);
     event moveReveal(address _player1, address _player2);
-    event declareWinner(address _winner);
+    event emitWinner(address _winner);
+    event emitDraw();
+    event winnerPayed(address _winner, uint _bet);
     event playerTimeOut(address _player);
+    event playerMoveRevealed(address _player0);
     
     constructor  (address payable _player1, uint _bet) payable { 
-        /** Habria que ver que el player1 tenga el balance que quiere apostar
-        y si no lo tiene que no se cree el contrato, pero no se como hacer eso*/
         player1 = _player1;
         bet = _bet;
         isFull = false;
+        isOpen = true;
     }
     
     function setPlayer2(address payable _player2) external payable{
@@ -51,22 +55,50 @@ contract GameRoom {
         player2 = _player2;
         isFull = true;
     }
-    function play(string memory _P1Move, string memory _P2Move) public isPlayer(){
-       
-         uint p1HashedMove = hashMove(_P1Move);
-         uint p2HashedMove = hashMove(_P2Move);
-         
-         require(p1HashedMove == uint(keccak256(abi.encodePacked(("rock")))) 
-         || p1HashedMove == uint(keccak256(abi.encodePacked(("paper")))) 
-         || p1HashedMove == uint(keccak256(abi.encodePacked(("scissors")))), 
-         "The play must be 'rock', 'paper' or 'scissors' ");
-         
-         require(p2HashedMove == uint(keccak256(abi.encodePacked(("rock")))) || 
-         p2HashedMove == uint(keccak256(abi.encodePacked(("paper")))) || 
-         p2HashedMove == uint(keccak256(abi.encodePacked(("scissors")))), 
-         "The play must be 'rock', 'paper' or 'scissors' ");
-         
-         payWiner(p1HashedMove,p2HashedMove);
+
+    function declareMove(bytes32 _move) public isPlayer() {
+        require(isOpen, "the game is already over, thanks for playing!");
+        if (getPlayer() == 1) {
+            changeMove(_move, player1, player2);
+        } else {
+            changeMove(_move, player2, player1);
+        }
+    }
+
+    function changeMove(bytes32 _move, address payable _player, address payable _rival) internal {
+        uint cooldown = block.timestamp;
+        cooldowns[_player] = cooldown;
+        require(moves[_player] == "", "you already made a move"); //VER COMO ARREGLARLO
+        if (cooldowns[_rival] != 0){
+            if (cooldowns[_player] - cooldowns[_rival] > timeBetweenPlays) {
+                emit playerTimeOut(_player);
+                //payWinner(_rival.number); FALTA HACER
+                _rival.transfer(bet*2);
+                isOpen = false;
+                return;
+            }
+        }
+        bytes32 move = _move;
+        move = moves[_player];
+        emit playerMove(_player, cooldown);
+    }
+    
+    function revealMove(string memory _move, bytes32 _commitedMove) public isPlayer() {
+        require(_commitedMove == keccak256(abi.encodePacked(_move)), "the moves are not the same");
+        bytes memory moveInBytes = bytes(_move);
+        if (moveInBytes[0] == 't'){
+            uint moveNumber = 0;
+            moveNumber = selection[msg.sender];        
+        }
+        if (moveInBytes[0] == 'p'){
+            if (moveInBytes[1] == 'a') {
+                uint moveNumber = 1;
+                selection[msg.sender] = moveNumber;    
+            } else if (moveInBytes[1] == 'i') {
+                uint moveNumber = 2;
+                selection[msg.sender] = moveNumber;        
+            }
+        }   
     }
 
     function getPlayer() internal view returns(uint) {
@@ -77,38 +109,79 @@ contract GameRoom {
         }
     }
 
-    function declareMove(bytes32 _move) public isPlayer() {
-        if (getPlayer() == 1) {
-            changeMove(_move, player1, player2);
-        } else {
-            changeMove(_move, player2, player1);
-        }
-    }
-
-
-    function changeMove(bytes32 _move, address _player, address _rival) internal {
-        uint cooldown = block.timestamp;
-        cooldown = cooldowns[_player];
-        require(moves[_player] == "", "you already made a move"); //VER COMO ARREGLARLO
-        if (cooldowns[_rival] != 0){
-            if (cooldowns[_player] - cooldowns[_rival] > timeBetweenPlays) {
-                emit playerTimeOut(_player);
-                //payWinner(_rival.number); FALTA HACER
-                return;
+    function declareWinner() public { //MATI tengo que ver como hacer para  verificar que ambos jugadores revelaron sus jugadas
+        require(isOpen, "the game is already over, thanks for playing!");
+        uint choice1 = selection[player1];
+        uint choice2 = selection[player2];
+        
+        if (choice1 == 0) {
+            if (choice2 == 0) {
+                player1.transfer(bet);
+                player2.transfer(bet);
+                emit emitDraw();
+            }
+            else if (choice2 == 1) {
+                player1.transfer(bet*2);
+                emit emitWinner(player1);
+            }
+            else if (choice2 == 2) {
+                player2.transfer(bet*2);
+                emit emitWinner(player2);
             }
         }
-        bytes32 move = _move;
-        move = moves[_player];
-        emit playerMove(_player, cooldown);
+        else if (choice1 == 1) {
+            if (choice2 == 0) {
+                player2.transfer(bet*2);
+                emit emitWinner(player2);}
+            else if (choice2 == 1) {
+                player1.transfer(bet);
+                player2.transfer(bet);
+                emit emitDraw();
+            }
+            else if (choice2 == 2) {
+                player1.transfer(bet*2);
+                emit emitWinner(player1);
+            }
+        }
+        else if (choice1 == 2) {
+            if (choice2 == 0) {
+                player1.transfer(bet*2);
+                emit emitWinner(player1);
+            }
+            else if (choice2 == 1) {
+                player2.transfer(bet*2);
+                emit emitWinner(player2);}
+            else if (choice2 == 2) {
+                player1.transfer(bet);
+                player2.transfer(bet);
+                emit emitDraw();
+            }
+        }
+        isOpen = false;
     }
-    
 
-
-     function hashMove(string memory _move) internal pure returns (uint hashedMove){
-         uint  _hashedMove = uint(keccak256(abi.encodePacked(_move)));
-         return (_hashedMove);
+//    function play(string memory _P1Move, string memory _P2Move) public isPlayer(){
+       
+//          uint p1HashedMove = hashMove(_P1Move);
+//          uint p2HashedMove = hashMove(_P2Move);
          
-     }
+//          require(p1HashedMove == uint(keccak256(abi.encodePacked(("rock")))) 
+//          || p1HashedMove == uint(keccak256(abi.encodePacked(("paper")))) 
+//          || p1HashedMove == uint(keccak256(abi.encodePacked(("scissors")))), 
+//          "The play must be 'rock', 'paper' or 'scissors' ");
+         
+//          require(p2HashedMove == uint(keccak256(abi.encodePacked(("rock")))) || 
+//          p2HashedMove == uint(keccak256(abi.encodePacked(("paper")))) || 
+//          p2HashedMove == uint(keccak256(abi.encodePacked(("scissors")))), 
+//          "The play must be 'rock', 'paper' or 'scissors' ");
+         
+//          payWiner(p1HashedMove,p2HashedMove);
+//     }
+//      function hashMove(string memory _move) internal pure returns (uint hashedMove){
+//          uint  _hashedMove = uint(keccak256(abi.encodePacked(_move)));
+//          return (_hashedMove);
+         
+//      }
      
      function checkWiner(uint _movePlayer1, uint _movePlayer2) internal pure returns (uint winer) {
          // keccak256 hash generator: https://sita.app/keccak256-hash-generator
