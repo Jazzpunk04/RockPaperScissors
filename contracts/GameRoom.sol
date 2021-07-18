@@ -42,6 +42,7 @@ contract GameRoom {
     event winnerPayed(address _winner, uint _bet);
     event playerTimeOut(address _player);
     event playerMoveRevealed(address _player0);
+    event gameIsColsed();
     
     constructor  (address payable _player1, uint _bet) payable { 
         player1 = _player1;
@@ -54,6 +55,14 @@ contract GameRoom {
         require(_player2.balance >= bet); 
         player2 = _player2;
         isFull = true;
+    }
+
+        function getPlayer() internal view returns(uint) {
+        if (msg.sender == player1){
+            return 1;
+        }else{
+        return 2;
+        }
     }
 
     function declareMove(bytes32 _move) public isPlayer() {
@@ -72,9 +81,9 @@ contract GameRoom {
         if (cooldowns[_rival] != 0){
             if (cooldowns[_player] - cooldowns[_rival] > timeBetweenPlays) {
                 emit playerTimeOut(_player);
-                //payWinner(_rival.number); FALTA HACER
                 _rival.transfer(bet*2);
                 isOpen = false;
+                emit gameIsColsed();
                 return;
             }
         }
@@ -99,14 +108,6 @@ contract GameRoom {
                 selection[msg.sender] = moveNumber;        
             }
         }   
-    }
-
-    function getPlayer() internal view returns(uint) {
-        if (msg.sender == player1){
-            return 1;
-        }else{
-        return 2;
-        }
     }
 
     function declareWinner() public { //MATI tengo que ver como hacer para  verificar que ambos jugadores revelaron sus jugadas
@@ -158,6 +159,7 @@ contract GameRoom {
             }
         }
         isOpen = false;
+        emit gameIsColsed();
     }
 
 //    function play(string memory _P1Move, string memory _P2Move) public isPlayer(){
