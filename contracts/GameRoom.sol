@@ -102,6 +102,7 @@ contract GameRoom {
     }
     
     function revealMove(string memory _move, bytes32 _commitedMove) public isPlayer() {
+        require(isOpen, "the game is already over, thanks for playing!");
         require(_commitedMove == keccak256(abi.encodePacked(_move)), "the moves are not the same");
         bytes memory moveInBytes = bytes(_move);
         if (moveInBytes[0] == 't'){
