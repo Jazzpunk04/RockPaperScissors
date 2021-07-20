@@ -1,7 +1,1 @@
-manejar los eventos
-hacer la encriptacion de la jugada con la palabra clave
-ver como transferir la plata ya que el contrato no puede hacerlo
-
-
-
- 
+meter la guita en el contrato
