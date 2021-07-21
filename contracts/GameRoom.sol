@@ -15,7 +15,6 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 contract GameRoom {
     using SafeMath for uint;
 
-    
     address payable player1;
     address payable player2;
     uint bet;
@@ -81,6 +80,11 @@ contract GameRoom {
     function isFullGame() public view returns (bool) {
         return isFull;
     }
+
+    function started() external view returns (bool) {
+        return moves[player1] == 0 || moves[player2] == 0;
+    }
+
     
     function declareMove(bytes32 _move) public isPlayer() {
         require(isOpen, "the game is already over, thanks for playing!");
