@@ -13,7 +13,7 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 
 contract GameRoom {
-    //using SafeMath for uint;
+    using SafeMath for uint;
 
     
     address payable player1;
@@ -39,7 +39,7 @@ contract GameRoom {
         _;
     }
     modifier playersHaveDeposited(uint totalAmout){
-        require(address(this).balance == bet*2, "All players must set bet to play");
+        require(address(this).balance == bet.mul(2), "All players must set bet to play");
         _;
     }
 
@@ -99,7 +99,7 @@ contract GameRoom {
         if (cooldowns[_rival] != 0){
             if (cooldowns[_player] - cooldowns[_rival] > timeBetweenPlays) {
                 emit playerTimeOut(_player);
-                _rival.transfer(bet*2);
+                _rival.transfer(bet.mul(2));
                 isOpen = false;
                 emit gameIsColsed();
                 return;
@@ -115,12 +115,12 @@ contract GameRoom {
             require(commitedMoves[player1] == 0, "you already commited your move"); //VER COMO ARREGLARLO
             revealMoveLogic(_move,_commitedMove);
             commitedMoves[msg.sender] = _commitedMove;
-            revealMoveCounter++;
+            revealMoveCounter.add(1);
         } else {
         require(commitedMoves[player2] == 0, "you already commited your move"); //VER COMO ARREGLARLO
             revealMoveLogic(_move,_commitedMove);
             commitedMoves[msg.sender] = _commitedMove;
-            revealMoveCounter++;
+            revealMoveCounter.add(1);
         }
     }
     
@@ -157,10 +157,10 @@ contract GameRoom {
              player2.transfer(bet);
              emit emitDraw();
         }else if (choice1 == 0 && choice2 == 1 || choice1 == 1 && choice2 == 2 || choice1 == 2 && choice2 == 0){
-            player1.transfer(bet*2);
+            player1.transfer(bet.mul(2));
             emit emitWinner(player1);
         }else{
-            player2.transfer(bet*2);
+            player2.transfer(bet.mul(2));
             emit emitWinner(player2);
         }
         
