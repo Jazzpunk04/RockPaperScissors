@@ -23,11 +23,13 @@ contract Lobby is Ownable{
     event gameCreated(GameRoom _game);                          /** o es asi event gameCreated(address _game);  ??*/
     event gameJoined(GameRoom _game, address _joinedPlayer);    /** o es asi event event gameJoined(address _game, address _joinedPlayer);  ??*/
     event gameDeleted(GameRoom _game);
+
     
     
-    function createGame(uint _bet) public{
-        require(msg.sender.balance > _bet, "you don't have the required balance to create the game");
-        GameRoom game = new GameRoom(payable(msg.sender), _bet);
+    
+    function createGame() public{
+        require(msg.sender.balance > msg.value, "you don't have the required balance to create the game");
+        GameRoom game = new GameRoom(payable(msg.sender), msg.value);
         payable(address(game)).transfer(_bet);
         gameRooms[address(game)] = game;
         emit gameCreated(game);
