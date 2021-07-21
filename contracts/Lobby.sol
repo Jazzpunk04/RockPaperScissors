@@ -27,7 +27,7 @@ contract Lobby is Ownable{
     
     
     
-    function createGame() public{
+    function createGame() external {
         require(msg.sender.balance > msg.value, "you don't have the required balance to create the game");
         GameRoom game = new GameRoom(payable(msg.sender), msg.value);
         payable(address(game)).transfer(_bet);
@@ -36,10 +36,15 @@ contract Lobby is Ownable{
     }
     
     
-   function joinGame(address _gamegameRoomAdress , address payable _joinedPlayer) internal {
+   function joinGame(address _gamegameRoomAdress , address payable _joinedPlayer) external {
         GameRoom game = gameRooms[_gamegameRoomAdress];
         game.setPlayer2(_joinedPlayer);
         payable(address(game)).transfer(game.getBet());
         emit gameJoined(game, _joinedPlayer);
     }
+
+    function deleteGame(address _gameAddress) external {
+        
+    }
+
 }  
