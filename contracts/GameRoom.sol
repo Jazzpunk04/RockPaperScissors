@@ -73,11 +73,11 @@ contract GameRoom {
         }
     }
     
-    function getBet() public view returns (uint) {
+    function getBet() external view returns (uint) {
         return bet;
     }
 
-    function isFullGame() public view returns (bool) {
+    function isFullGame() external view returns (bool) {
         return isFull;
     }
 
