@@ -82,7 +82,7 @@ contract GameRoom {
     }
 
     function started() external view returns (bool) {
-        return moves[player1] == 0 || moves[player2] == 0;
+        return moves[player1] != 0 || moves[player2] != 0;
     }
 
     
