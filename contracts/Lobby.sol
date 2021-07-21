@@ -45,7 +45,7 @@ contract Lobby is Ownable{
 
     function deleteGame() external {
         require(gameRooms[msg.sender].started(), "The game has already started");
-        msg.sender.transfer(gameRooms[msg.sender].getBet());
+        payable(msg.sender).transfer(gameRooms[msg.sender].getBet());
         emit gameDeleted(gameRooms[msg.sender]);
         delete gameRooms[msg.sender];
     }
