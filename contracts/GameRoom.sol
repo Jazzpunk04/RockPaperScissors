@@ -43,12 +43,12 @@ contract GameRoom {
     }
 
     event playerMove(address _player, uint time);
-    event moveReveal(address _player1, address _player2);
     event emitWinner(address _winner);
     event emitDraw();
     event winnerPayed(address _winner, uint _bet);
     event playerTimeOut(address _player);
     event playerMoveRevealed(address _player0);
+    event bothPlayersRevealed();
     event gameIsColsed();
     
     constructor (address payable _player1, uint _bet) payable { 
@@ -126,6 +126,9 @@ contract GameRoom {
             commitedMoves[msg.sender] = _commitedMove;
             revealMoveCounter.add(1);
         }
+        if (revealMoveCounter == 2) {
+            emit bothPlayersRevealed();
+        }
     }
     
     
@@ -146,7 +149,8 @@ contract GameRoom {
                 uint moveNumber = 2;
                 selection[msg.sender] = moveNumber;        
             }
-        }   
+        }  
+        emit playerMoveRevealed(msg.sender); 
     }
 
     function declareWinner() public { //MATI tengo que ver como hacer para  verificar que ambos jugadores revelaron sus jugadas
@@ -167,7 +171,6 @@ contract GameRoom {
             player2.transfer(bet.mul(2));
             emit emitWinner(player2);
         }
-        
         isOpen = false;
         emit gameIsColsed();
     }
